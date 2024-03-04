@@ -1,18 +1,20 @@
 # Gentoo install guide/script for my Desktop running an AMD Ryzen 5 5600X and a NVIDIA RTX 3060Ti
 
 
-# Create efi and root partition (optionally swap/home, not covered)
+# Create efi and root partition (optionally home, not covered)
 fdisk /dev/nvme0n1
 
 # Format partitions
 mkfs.fat -F 32 /dev/nvme0n1p1
-mkfs.ext4 /dev/nvme0n1p2
+mkswap /dev/nvme0n1p2
+swapon /dev/nvme0n1p2
+mkfs.ext4 /dev/nvme0n1p3
 
 # Mount Gentoo root partition
 mount /dev/nvme0n1p2 /mnt/gentoo
 cd /mnt/gentoo
 
-# Download, extract and cleanup Stage 3 (amd64 desktop systemd used in the following)
+# Download, extract and cleanup Stage 3 (amd64 desktop systemd merged-usr used in the following)
 # Example UNI Bochum: https://linux.rz.ruhr-uni-bochum.de/download/gentoo-mirror/releases/amd64/autobuilds/current-stage3-amd64-openrc/
 wget https://linux.rz.ruhr-uni-bochum.de/download/gentoo-mirror/releases/amd64/autobuilds/current-stage3-amd64-desktop-systemd-mergedusr/stage3-amd64-desktop-systemd-mergedusr-20240303T170409Z.tar.xz
 tar xpvf stage3-*.tar.xz --xattrs-include='*.*' --numeric-owner
@@ -20,29 +22,6 @@ rm stage3-*.tar.xz
 
 # Edit make.conf, tweak as needed
 vim /mnt/gentoo/etc/portage/make.conf
-    > COMMON_FLAGS="-march=native -O2 -pipe"
-    # append FFLAGS
-    > MAKEOPTS="-j7 -l7"
-    > EMERGE_DEFAULT_OPTS="--jobs=7 --load-average=7 --ask --verbose --quiet --autounmask-continue"
-    > FEATURES="candy parrallel-fetch parallel-install sign collision-protect"
-    > ACCEPT_KEYWORDS="~amd64"
-    > ACCEPT_LICENSE="*"
-    > VIDEO_CARDS="intel i965 iris"
-    > INPUT_DEVICES="libinput"
-    > CPU_FLAGS_X86="REPLACE ME WITH APPROPRIATE CPU FLAGS"
-    > USE="-systemd -kde -wext -ppp -modemmanager"
-    >
-    > PYTHON_TARGETS="python3_8 python3_9"
-    > PYTHON_SINGLE_TARGET="python3_8"
-    > LUA_TARGETS="luajit"
-    > LUA_SINGLE_TARGET="luajit lua5-2"
-    > L10N="en th"
-    # append NOTE
-    > PORTDIR="/var/db/repos/gentoo"
-    > DISTDIR="/var/cache/distfiles"
-    > PKGDIR="/var/cache/binpkgs"
-    # append LC_MESSAGES
-    > GRUB_PLATFORMS="efi-64"
 
 # Configuring repos
 mkdir --parents /mnt/gentoo/etc/portage/repos.conf
@@ -71,9 +50,8 @@ emerge-webrsync
 eselect news read
 eselect profile list
     # eselect profile set XY
-# Handbook suggests using tool for cpuflags, not in video --> needs testing
-    emerge --ask app-portage/cpuid2cpuflags
-    cpuid2cpuflags
+emerge --ask app-portage/cpuid2cpuflags
+cpuid2cpuflags
 emerge --ask --verbose --update --deep --newuse @world
 
 # Setting timezone with OpenRC
