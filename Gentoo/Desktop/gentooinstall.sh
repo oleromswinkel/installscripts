@@ -1,5 +1,6 @@
 # Gentoo install guide/script for my Desktop running an AMD Ryzen 5 5600X and a NVIDIA RTX 3060Ti
-
+# Similar Guide I found:
+# https://pastebin.com/tXCWA4Mn 
 
 # Create efi and root partition (optionally home, not covered)
 fdisk /dev/nvme0n1
