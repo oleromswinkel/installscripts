@@ -20,10 +20,10 @@ wget https://linux.rz.ruhr-uni-bochum.de/download/gentoo-mirror/releases/amd64/a
 tar xpvf stage3-*.tar.xz --xattrs-include='*.*' --numeric-owner
 rm stage3-*.tar.xz
 
-# Edit make.conf, tweak as needed
+# Edit make.conf, tweak as needed (see make.conf)
 vim /mnt/gentoo/etc/portage/make.conf
 
-# Configuring repos
+# Configuring repos, networking
 mkdir --parents /mnt/gentoo/etc/portage/repos.conf
 cp /mnt/gentoo/usr/share/portage/config/repos.conf /mnt/gentoo/etc/portage/repos.conf/gentoo.conf
 cp --dereference /etc/resolv.conf /mnt/gentoo/etc/
@@ -47,50 +47,29 @@ mount /dev/nvme0n1p1 /boot/efi
 
 # Configuring gentoo system
 emerge-webrsync
-eselect news read
 eselect profile list
     # eselect profile set XY
-emerge --ask app-portage/cpuid2cpuflags
-cpuid2cpuflags
 emerge --ask --verbose --update --deep --newuse @world
 
 # Setting timezone with OpenRC
-echo "Europe/Berlin" > /etc/timezone
-    # with systemd
-    # ln -sf ../usr/share/zoneinfo/Europe/Berlin /etc/localtime
-emerge --config sys-libs/timezone-data
+ln -sf ../usr/share/zoneinfo/Europe/Berlin /etc/localtime
 
-# Setting locale
+# Setting locale, uncoment and set as needed
 nano -w /etc/locale.gen
-    > en_US.UTF-8 UTF-8
-    > C.UTF8 UTF-8
 locale-gen
 eselect locale list
 eselect locale set XY
 env-update && source /etc/profile && export PS1="(chroot) ${PS1}"
 
-# Configuring gentoo-overlay
-emerge eselect-repository
-eselect repository enable linux-surface
-echo sys-kernel/surface-sources ~amd64 >> /etc/portage/package.accept_keywords
-emerge dev-vcs/git
-emerge --sync
-emaint sync -r linux-surface
-emerge --ask sys-kernel/surface-sources
-
 # Configuring kernel
+emerge gentoo-sources
 eselect kernel list
 esekect kernel set XY
-    # shoulf be 1 already
 cd /usr/src/linux
-# for premade: wget git.io/JRW9y && mv JRW9y .config
-make nconfig
-    # ensure MS-Surface specific driver & wifi-card
-    # emerge pciutils
-    # lspci -k | grep Ethernet to check
-make -j8 && make modules_install
+make nconfig # or menuconfig, ..., whatever preferred
+make && make modules_install
 make install
-# if using lz4 kernel compression
+# for lz4 kernel compression
 # emerge lz4
 
 # generating initramfs (needed for surface devices)
@@ -101,9 +80,9 @@ genkernel --install --kernel-config /usr/src/linux/.config initramfs
 
 # Editing fstab
 nano /etc/fstab
-    > /dev/nvme0n1p5    /           ext4    noatime             0   1
+    > /dev/nvme0n1p3    /           ext4    noatime             0   1
     > /dev/nvme0n1p1    /boot/efi   vfat    defaults,noatime    0   2
-    > /dev/nvme0n1p6    none        swap    sw                  0   0
+    > /dev/nvme0n1p2    none        swap    sw                  0   0
 
 # Setting hostname
 nano /etc/conf.d/hostname
@@ -117,32 +96,16 @@ passwd
 
 # Setting up networking
 emerge networkmanager
-rc-update add NetworkManager default
-
-# OpenRC specific init
-nano /etc/rc.conf
-    > rc_parallel="YES"
-
-# Hardware Clock
-nano /etc/conf.d/hwclock
-    # for dualboot with Windows
-    >clock="local"
-    >clock_hctosys="YES"
-    >clock_systohc="YES"
+systemctl enable NetworkManager
 
 # Installing different system utilities
 # Skipping system logger, cron daemon
 emerge --ask sys-apps/mlocate
 emerge e2fsprogs
-    # possibly already installed
 
-# Configuring bootloader, double check grub platform in make.conf
+# Configuring bootloader, double check grub platforms in make.conf
 emerge grub:2
-grub-install --target=x86_64-efi --efi-directory=/boot/efi/
-# for dualboot detecttion
-    emerge os-prober
-    nano /etc/default/grub
-    > GRUB_DISABLE_OS_PROBER=false
+grub-install --target=x86_64-efi --efi-directory=/boot/efi/ --bootloader-id=grub2
 grub-mkconfig -o /boot/grub/grub.cfg
 
 # Finishing up
