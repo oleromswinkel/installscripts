@@ -48,8 +48,13 @@ mount /dev/nvme0n1p1 /boot/efi
 # Configuring gentoo system
 emerge-webrsync
 eselect profile list
-    # eselect profile set XY
+eselect profile set XY
 emerge --ask --verbose --update --deep --newuse @world
+
+# All-in-One emerge for all further needed packages
+# Skipping system logger, cron daemon
+emerge gentoo-sources lz4 sys-kernel/genkernel linux-firmware networkmanager e2fsprogs \
+ sys-apps/mlocate grub:2
 
 # Setting timezone with OpenRC
 ln -sf ../usr/share/zoneinfo/Europe/Berlin /etc/localtime
@@ -61,22 +66,16 @@ eselect locale list
 eselect locale set XY
 env-update && source /etc/profile && export PS1="(chroot) ${PS1}"
 
-# Configuring kernel
-emerge gentoo-sources
+# Configuring and compiling kernel
 eselect kernel list
 esekect kernel set XY
 cd /usr/src/linux
-make nconfig # or menuconfig, ..., whatever preferred
+make nconfig   # or menuconfig, ..., whatever preferred
 make && make modules_install
 make install
-# for lz4 kernel compression
-# emerge lz4
 
-# generating initramfs (needed for surface devices)
-emerge --ask sys-kernel/genkernel
+# Generating initramfs (needed for surface devices)
 genkernel --install --kernel-config /usr/src/linux/.config initramfs
-# if not installed already, "R" in bracets means reinstall
-    emerge linux-firmware
 
 # Editing fstab
 nano /etc/fstab
@@ -86,25 +85,18 @@ nano /etc/fstab
 
 # Setting hostname
 nano /etc/conf.d/hostname
-    > hostname="SP7-Gentoo"
+    > hostname="Desktop-Gentoo"
 nano /etc/hosts
-    > 127.0.0.1 SP7-Gentoo
-    > ::1       SP7-Gentoo
+    > 127.0.0.1 Desktop-Gentoo
+    > ::1       Desktop-Gentoo
 
 #Setting Password
 passwd
 
-# Setting up networking
-emerge networkmanager
+# Setting up networking 
 systemctl enable NetworkManager
 
-# Installing different system utilities
-# Skipping system logger, cron daemon
-emerge --ask sys-apps/mlocate
-emerge e2fsprogs
-
 # Configuring bootloader, double check grub platforms in make.conf
-emerge grub:2
 grub-install --target=x86_64-efi --efi-directory=/boot/efi/ --bootloader-id=grub2
 grub-mkconfig -o /boot/grub/grub.cfg
 
