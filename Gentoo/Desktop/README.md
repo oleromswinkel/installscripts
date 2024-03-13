@@ -1,7 +1,7 @@
 # Gentoo install guide/script for my Desktop running an AMD Ryzen 5 5600X and a NVIDIA RTX 3060Ti
 Similar Guide I found: https://pastebin.com/tXCWA4Mn 
 
-## Create efi and root partition (optionally home and/or swap)
+## Create partition layout (efi, root and optionally home and/or swap)
 EFI Partition with UUID: `c12a7328-f81f-11d2-ba4b-00a0c93ec93b` <br>
 Swap Partition with UUID: `0657fd6d-a4ab-43c4-84e5-0933c84b4f4f` <br>
 Root Partition with UUID: `4f68bce3-e8cd-4db1-96e7-fbcaf984b709` 
@@ -13,10 +13,12 @@ fdisk /dev/nvme0n1
 ## Format partitions
 ```
 mkfs.fat -F 32 /dev/nvme0n1p1
+mkswap /dev/nvme0n1p2
+swapon /dev/nvme0n1p2
 mkfs.ext4 /dev/nvme0n1p3
 ```
 
-## Mount Gentoo root partition
+## Mount root partition
 ```
 mkdir /mnt/gentoo
 mount /dev/nvme0n1p2 /mnt/gentoo
@@ -24,9 +26,9 @@ cd /mnt/gentoo
 ```
 
 ## Download, extract and cleanup Stage 3 (amd64 desktop systemd merged-usr used in the following)
-UNI Bochum: https://linux.rz.ruhr-uni-bochum.de/download/gentoo-mirror/releases/amd64/autobuilds/current-stage3-amd64-openrc/
+UNI Bochum: https://linux.rz.ruhr-uni-bochum.de/download/gentoo-mirror/releases/amd64/autobuilds/
 ```
-wget https://linux.rz.ruhr-uni-bochum.de/download/gentoo-mirror/releases/amd64/autobuilds/current-stage3-amd64-desktop-systemd-mergedusr/stage3-amd64-desktop-systemd-mergedusr-20240303T170409Z.tar.xz
+wget <tarball link>
 tar xpvf stage3-*.tar.xz --xattrs-include='*.*' --numeric-owner
 rm stage3-*.tar.xz
 ```
@@ -50,7 +52,11 @@ mount --rbind /sys /mnt/gentoo/sys
 mount --make-rslave /mnt/gentoo/sys
 mount --rbind /dev /mnt/gentoo/dev
 mount --make-rslave /mnt/gentoo/dev
+mount --bind /run /mnt/gentoo/run
+mount --make-slave /mnt/gentoo/run
+test -L /dev/shm && rm /dev/shm && mkdir /dev/shm
 mount --types tmpfs --options nosuid,nodev,noexec shm /dev/shm
+chmod 1777 /dev/shm /run/shm
 ```
 
 ## chrooting
@@ -62,28 +68,39 @@ export PS1="(chroot) ${PS1}"
 
 ## Mount efi partition
 ```
-mkdir /boot/efi
+mkdir --parents /boot/efi
 mount /dev/nvme0n1p1 /boot/efi
 ```
 
-## Configuring gentoo system
+## Syncing system clock
 ```
-emerge-webrsync
-eselect profile list
-eselect profile set XY
-emerge --ask --verbose --update --deep --newuse @world
+chronyd -q
 ```
 
-## All-in-One emerge for all further needed packages
-Skipping system logger, cron daemon
+## Updating minimal install
 ```
-emerge gentoo-sources lz4 sys-kernel/genkernel linux-firmware networkmanager e2fsprogs \
- sys-apps/mlocate grub:2
+emerge-webrsync
+emerge --oneshot app-portage/mirrorselect
+mirrorselect -i -o >> /etc/portage/make.conf
+eselect news read
+emerge --sync
+```
+
+## Selecting profile
+```
+eselect profile list
+eselect profile set <profile number>
+```
+
+## Updating world set
+```
+emerge --ask --verbose --update --deep --newuse @world
 ```
 
 ## Setting timezone with OpenRC
 ```
-ln -sf ../usr/share/zoneinfo/Europe/Berlin /etc/localtime
+echo "Europe/Berlin" > /etc/timezone
+emerge --config sys-libs/timezone-data
 ```
 
 ## Setting locale, uncoment and set as needed
@@ -95,19 +112,20 @@ eselect locale set <preferred>
 env-update && source /etc/profile && export PS1="(chroot) ${PS1}"
 ```
 
-## Configuring and compiling kernel
+## Installing firmware + AMD microcode (integrated)
 ```
-eselect kernel list
-esekect kernel set XY
-cd /usr/src/linux
-make menuconfig
-make -j12 -l12 && make -j12 -l12 modules
-make install && make modules_install
+emerge sys-kernel/linux-firmware
 ```
 
-## Generating initramfs (needed for surface devices)
+## Configuring and compiling kernel
 ```
-genkernel --install --kernel-config /usr/src/linux/.config initramfs
+cd /usr/src/linux
+make menuconfig
+make -j12 -l12 && make modules_install
+make install
+emerge sys-kernel/installkernel
+nano /etc/portage/package.use/module-rebuild
+    > */* dist-kernel
 ```
 
 ## Editing fstab
