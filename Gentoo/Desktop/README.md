@@ -21,7 +21,7 @@ mkfs.ext4 /dev/nvme0n1p3
 ## Mount root partition
 ```
 mkdir /mnt/gentoo
-mount /dev/nvme0n1p2 /mnt/gentoo
+mount /dev/nvme0n1p3 /mnt/gentoo
 cd /mnt/gentoo
 ```
 
@@ -115,6 +115,7 @@ emerge sys-kernel/linux-firmware
 ```
 
 ## Configuring and compiling kernel
+Use Handbook as reference for configuration: https://wiki.gentoo.org/wiki/Handbook:AMD64/Installation/Kernel
 ```
 emerge sys-kernel/gentoo-sources
 eselect kernel list
@@ -123,36 +124,33 @@ cd /usr/src/linux
 make menuconfig
 make -j12 && make modules_install
 make install
-emerge sys-kernel/installkernel
-nano /etc/portage/package.use/module-rebuild
-    > */* dist-kernel
+emerge sys-kernel/installkernel sys-kernel/dracut
+dracut --kver=6.1.38-gentoo
 ```
 
 ## Editing fstab
 ```
 nano /etc/fstab
-    > /dev/nvme0n1p3    /           ext4    noatime             0   1
-    > /dev/nvme0n1p1    /boot/efi   vfat    defaults,noatime    0   2
-    > /dev/nvme0n1p2    none        swap    sw                  0   0
+```
+```
+PARTUUID=c12a7328-f81f-11d2-ba4b-00a0c93ec93b   /efi        vfat    umask=0077                   0 2
+PARTUUID=0657fd6d-a4ab-43c4-84e5-0933c84b4f4f   none        swap    sw                           0 0
+PARTUUID=4f68bce3-e8cd-4db1-96e7-fbcaf984b709   /           xfs     defaults,noatime             0 1
 ```
 
-## Configuring hostname
+## Configuring networking
 ```
-nano /etc/conf.d/hostname
-    > hostname="Desktop-Gentoo"
+echo gentoo > /etc/hostname
+emerge net-misc/dhcpcd
+rc-update add dhcpcd default
 nano /etc/hosts
-    > 127.0.0.1 Desktop-Gentoo
-    > ::1       Desktop-Gentoo
+    > 127.0.0.1 gentoo localhost
+    > ::1       gentoo localhost
 ```
 
 ## Setting Password
 ```
 passwd
-```
-
-## Setting up networking 
-```
-systemctl enable NetworkManager
 ```
 
 ## Configuring bootloader, double check grub platforms in make.conf
@@ -163,6 +161,8 @@ grub-mkconfig -o /boot/grub/grub.cfg
 
 ## Finishing up
 ```
+nano /etc/rc.conf
+nano /etc/conf.d/keymaps
 exit
 cd
 umount -l /mnt/gentoo/dev{/shm,/pts,}
