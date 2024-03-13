@@ -2,7 +2,7 @@ UNFINISHED
 
 # install medium config
 Loading appropriate keymap
-`loadkeys de-latin1`
+```loadkeys de-latin1```
 Setting up wifi if neccesary
 `iwctl`
 loadkeys de-latin1
