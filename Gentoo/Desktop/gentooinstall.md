@@ -100,33 +100,47 @@ make install
 ```
 
 # Generating initramfs (needed for surface devices)
+```
 genkernel --install --kernel-config /usr/src/linux/.config initramfs
+```
 
 # Editing fstab
+```
 nano /etc/fstab
     > /dev/nvme0n1p3    /           ext4    noatime             0   1
     > /dev/nvme0n1p1    /boot/efi   vfat    defaults,noatime    0   2
     > /dev/nvme0n1p2    none        swap    sw                  0   0
+```
 
 # Setting hostname
+```
 nano /etc/conf.d/hostname
     > hostname="Desktop-Gentoo"
 nano /etc/hosts
     > 127.0.0.1 Desktop-Gentoo
     > ::1       Desktop-Gentoo
+```
 
-#Setting Password
+# Setting Password
+```
 passwd
+```
 
 # Setting up networking 
+```
 systemctl enable NetworkManager
+```
 
 # Configuring bootloader, double check grub platforms in make.conf
+```
 grub-install --target=x86_64-efi --efi-directory=/boot/efi/ --bootloader-id=grub2
 grub-mkconfig -o /boot/grub/grub.cfg
+```
 
 # Finishing up
+```
 exit
 cd
 umount -l /mnt/gentoo/dev{/shm,/pts,}
 umount -R /mnt/gentoo
+```
