@@ -1,8 +1,10 @@
 UNFINISHED
 
 # install medium config
-
-iwctl
+Loading appropriate keymap
+`loadkeys de-latin1`
+Setting up wifi if neccesary
+`iwctl`
 loadkeys de-latin1
 timedatectl set-ntp true
 reflector -c 'Germany' -a 12 - -sort rate - -save etc/pacman.d/mirrorlist
