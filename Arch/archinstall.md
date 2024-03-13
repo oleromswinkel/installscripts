@@ -1,6 +1,7 @@
 UNFINISHED
 
 # install medium config
+
 iwctl
 loadkeys de-latin1
 timedatectl set-ntp true
