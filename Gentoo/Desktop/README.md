@@ -54,9 +54,6 @@ mount --rbind /dev /mnt/gentoo/dev
 mount --make-rslave /mnt/gentoo/dev
 mount --bind /run /mnt/gentoo/run
 mount --make-slave /mnt/gentoo/run
-test -L /dev/shm && rm /dev/shm && mkdir /dev/shm
-mount --types tmpfs --options nosuid,nodev,noexec shm /dev/shm
-chmod 1777 /dev/shm /run/shm
 ```
 
 ## chrooting
@@ -119,9 +116,12 @@ emerge sys-kernel/linux-firmware
 
 ## Configuring and compiling kernel
 ```
+emerge sys-kernel/gentoo-sources
+eselect kernel list
+eselect kernel set <preferred>
 cd /usr/src/linux
 make menuconfig
-make -j12 -l12 && make modules_install
+make -j12 && make modules_install
 make install
 emerge sys-kernel/installkernel
 nano /etc/portage/package.use/module-rebuild
