@@ -18,7 +18,7 @@ cd /mnt/gentoo
 ```
 
 # Download, extract and cleanup Stage 3 (amd64 desktop systemd merged-usr used in the following)
-## UNI Bochum: https://linux.rz.ruhr-uni-bochum.de/download/gentoo-mirror/releases/amd64/autobuilds/current-stage3-amd64-openrc/
+UNI Bochum: https://linux.rz.ruhr-uni-bochum.de/download/gentoo-mirror/releases/amd64/autobuilds/current-stage3-amd64-openrc/
 ```
 wget https://linux.rz.ruhr-uni-bochum.de/download/gentoo-mirror/releases/amd64/autobuilds/current-stage3-amd64-desktop-systemd-mergedusr/stage3-amd64-desktop-systemd-mergedusr-20240303T170409Z.tar.xz
 tar xpvf stage3-*.tar.xz --xattrs-include='*.*' --numeric-owner
@@ -69,27 +69,35 @@ emerge --ask --verbose --update --deep --newuse @world
 ```
 
 # All-in-One emerge for all further needed packages
-# Skipping system logger, cron daemon
+Skipping system logger, cron daemon
+```
 emerge gentoo-sources lz4 sys-kernel/genkernel linux-firmware networkmanager e2fsprogs \
  sys-apps/mlocate grub:2
+```
 
 # Setting timezone with OpenRC
+```
 ln -sf ../usr/share/zoneinfo/Europe/Berlin /etc/localtime
+```
 
 # Setting locale, uncoment and set as needed
+```
 nano -w /etc/locale.gen
 locale-gen
 eselect locale list
 eselect locale set XY
 env-update && source /etc/profile && export PS1="(chroot) ${PS1}"
+```
 
 # Configuring and compiling kernel
+```
 eselect kernel list
 esekect kernel set XY
 cd /usr/src/linux
 make nconfig   # or menuconfig, ..., whatever preferred
 make && make modules_install
 make install
+```
 
 # Generating initramfs (needed for surface devices)
 genkernel --install --kernel-config /usr/src/linux/.config initramfs
