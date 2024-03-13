@@ -1,12 +1,15 @@
 UNFINISHED
 
-# install medium config
+# Confifuring install medium
 ## Loading appropriate keymap
-> `loadkeys de-latin1`
-Setting up wifi if neccesary
+`loadkeys de-latin1`
+## Setting up wifi if neccesary
 `iwctl`
-loadkeys de-latin1
+## Setting appropriate keymap
+`loadkeys de-latin1`
+## Sync time to ntp
 timedatectl set-ntp true
+
 reflector -c 'Germany' -a 12 - -sort rate - -save etc/pacman.d/mirrorlist
 pacman -Syy
 

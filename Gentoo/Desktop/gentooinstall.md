@@ -1,56 +1,72 @@
 # Gentoo install guide/script for my Desktop running an AMD Ryzen 5 5600X and a NVIDIA RTX 3060Ti
-# Similar Guide I found:
-# https://pastebin.com/tXCWA4Mn 
+## Similar Guide I found: https://pastebin.com/tXCWA4Mn 
 
-# Create efi and root partition (optionally home, not covered)
-fdisk /dev/nvme0n1
+# Create efi and root partition (optionally home and/or swap)
+```fdisk /dev/nvme0n1```
 
 # Format partitions
+```
 mkfs.fat -F 32 /dev/nvme0n1p1
-mkswap /dev/nvme0n1p2
-swapon /dev/nvme0n1p2
 mkfs.ext4 /dev/nvme0n1p3
+```
 
 # Mount Gentoo root partition
+```
+mkdir /mnt/gentoo
 mount /dev/nvme0n1p2 /mnt/gentoo
 cd /mnt/gentoo
+```
 
 # Download, extract and cleanup Stage 3 (amd64 desktop systemd merged-usr used in the following)
-# Example UNI Bochum: https://linux.rz.ruhr-uni-bochum.de/download/gentoo-mirror/releases/amd64/autobuilds/current-stage3-amd64-openrc/
+## UNI Bochum: https://linux.rz.ruhr-uni-bochum.de/download/gentoo-mirror/releases/amd64/autobuilds/current-stage3-amd64-openrc/
+```
 wget https://linux.rz.ruhr-uni-bochum.de/download/gentoo-mirror/releases/amd64/autobuilds/current-stage3-amd64-desktop-systemd-mergedusr/stage3-amd64-desktop-systemd-mergedusr-20240303T170409Z.tar.xz
 tar xpvf stage3-*.tar.xz --xattrs-include='*.*' --numeric-owner
 rm stage3-*.tar.xz
+```
 
 # Edit make.conf, tweak as needed (see make.conf)
+```
 vim /mnt/gentoo/etc/portage/make.conf
+```
 
 # Configuring repos, networking
+```
 mkdir --parents /mnt/gentoo/etc/portage/repos.conf
 cp /mnt/gentoo/usr/share/portage/config/repos.conf /mnt/gentoo/etc/portage/repos.conf/gentoo.conf
 cp --dereference /etc/resolv.conf /mnt/gentoo/etc/
+```
 
-#Preparing chroot
+# Preparing chroot
+```
 mount --types proc /proc /mnt/gentoo/proc
 mount --rbind /sys /mnt/gentoo/sys
 mount --make-rslave /mnt/gentoo/sys
 mount --rbind /dev /mnt/gentoo/dev
 mount --make-rslave /mnt/gentoo/dev
 mount --types tmpfs --options nosuid,nodev,noexec shm /dev/shm
+```
 
 # chrooting
+```
 chroot /mnt/gentoo /bin/bash
 source /etc/profile
 export PS1="(chroot) ${PS1}"
+```
 
 # Mount efi partition
+```
 mkdir /boot/efi
 mount /dev/nvme0n1p1 /boot/efi
+```
 
 # Configuring gentoo system
+```
 emerge-webrsync
 eselect profile list
 eselect profile set XY
 emerge --ask --verbose --update --deep --newuse @world
+```
 
 # All-in-One emerge for all further needed packages
 # Skipping system logger, cron daemon
