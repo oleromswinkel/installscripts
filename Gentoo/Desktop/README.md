@@ -140,12 +140,12 @@ PARTUUID=4f68bce3-e8cd-4db1-96e7-fbcaf984b709   /           xfs     defaults,noa
 
 ## Configuring networking
 ```
-echo gentoo > /etc/hostname
+echo desktop-gentoo > /etc/hostname
 emerge net-misc/dhcpcd
 rc-update add dhcpcd default
 nano /etc/hosts
-    > 127.0.0.1 gentoo localhost
-    > ::1       gentoo localhost
+    > 127.0.0.1 desktop-gentoo localhost
+    > ::1       desktop-gentoo localhost
 ```
 
 ## Setting Password
